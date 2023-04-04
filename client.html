@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+   <script src="/socket.io/socket.io.js"></script>
+   <script type="text/javascript">
+
+      let socketio = io.connect();
+      let roomName = "";
+      //socketio.on("username_to_client", function (isValid) {
+      //isValid;
+      //username == null || !regEx.test(username) || 
+      //if (!isValid) {
+      //username = prompt("Enter a username: ");
+      //socketio.emit("newUser", username);
+      //}
+      //});
+      //socketio.on("connect", function() {
+      let username = prompt("Enter a username: ");
+      //let valid = false;
+      const regEx = /[a-zA-Z]/;
+      //socketio.emit("newUser", username);
+
+
+      //socketio.emit("newUser", username);
+      //});
+
+      class room {
+          room (name, owner) {
+              this.name = name;
+              this.owner = owner;
+              this.users = [owner];
+              this.messages = [];
+              this.banned = []
+          }
+      }
+
+      socketio.on("rooms_to_client", function (allRooms) {
+         textOfRooms = document.getElementById("rooms");
+         while(textOfRooms.firstChild) {
+            textOfRooms.removeChild(textOfRooms.firstChild);
+        }
+        roomNameElement = document.createElement("span");
+       roomNameElement.appendChild(document.createTextNode("Rooms:"));
+       textOfRooms.append(roomNameElement.textContent);
+        allRooms.forEach(function (element) {
+           roomNameElement = document.createElement("span");
+           roomNameElement.setAttribute("class", "roomNameElement");
+           roomNameElement.appendChild(document.createTextNode(element));
+           textOfRooms.append(roomNameElement.textContent + ", ");
+        });
+      });
+
+
+      socketio.on("message_to_client", function (data) {
+         console.log(data);
+         // how to use socket rooms properly (socketio.in(roomName))
+         //if (roomName == data["room"]) {
+         //Append an HR thematic break and the escaped HTML of the new message
+         document.getElementById("chatlog").appendChild(document.createElement("hr"));
+         document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
+         //}
+      });
+
+      socketio.on("newRoom_to_client", function (data) {
+         let roomName = data["roomName"];
+         let textOfRooms = document.getElementById("rooms");
+         let roomNameElement = document.createElement("span");
+         roomNameElement.setAttribute("class", "roomNameElement");
+         roomNameElement.appendChild(document.createTextNode(roomName));
+         textOfRooms.append(roomNameElement.textContent + ", ");
+      });
+
+      socketio.on("room_to_client", function (data) {
+         let curRoomText = document.getElementById("curRoom");
+         curRoomText.textContent = "Current Room: " + data["roomName"];
+         if (document.getElementById("deleteRoomBtn") != null) {
+            updateDeleteBtn();
+         }
+         let usersInRoomText = document.getElementById("curRoom");
+         //data["allRoomsAndUsers"].data["roomName"].forEach(function (element) {
+            //usersInRoomText.textContent = usersInRoomText.textContent + element;
+         //});
+      });
+
+      socketio.on("createDelete", function (roomName) {
+         prevDeleteBtn = document.getElementById("deleteRoomBtn");
+         if (prevDeleteBtn != null) {
+            prevDeleteBtn.remove();
+         }
+         let deleteBtn = document.createElement("button");
+         deleteBtn.setAttribute("id", "deleteRoomBtn");
+         // deleteBtn.setAttribute("value", "Delete Room " + roomName);
+         deleteBtn.textContent = ("Delete Room: " + roomName);
+         deleteBtn.setAttribute("onclick", "deleteRoom()")
+         document.getElementById("deleteBtnSpan").appendChild(deleteBtn);
+         
+      });
+
+      socketio.on("deletionCompleted", function(data) {
+         alert(data["message"]);
+         textOfRooms = document.getElementById("rooms");
+         prevDeleteBtn = document.getElementById("deleteRoomBtn");
+         if (prevDeleteBtn != null) {
+            prevDeleteBtn.remove();
+         }
+         let curRoomText = document.getElementById("curRoom");
+         curRoomText.textContent = "Current Room: "
+      });
+
+      //delete, kick, ban, listing users in room, can't create username if made, private messages
+
+
+      function sendMessage() {
+         let msg = document.getElementById("message_input").value;
+         socketio.emit("message_to_server", { message: msg, username: username, room: roomName });
+      }
+
+      //start of change
+      function createRoom() {
+         roomName = document.getElementById("newRoom").value;
+         let room = new room(roomName, username)
+         socketio.emit("newRoom_to_server", room);
+      }
+
+      function joinRoom() {
+         let oldRoom = roomName;
+         roomName = document.getElementById("joinRoom").value;
+         socketio.emit("roomName_to_server", { roomName: roomName, username: username, oldRoom: oldRoom });
+      }
+
+      function deleteRoom() {
+         socketio.emit("delete_room", roomName);
+      }
+
+      function updateDeleteBtn() {
+         btn = document.getElementById("deleteRoomBtn");
+         btn.textContent = ("Delete Room: " + roomName);
+      }
+
+
+   </script>
+</head>
+
+<body>
+   <p id="rooms">Rooms: </p>
+   <p id="curRoom">Current Room: </p>
+   <p id="curRoomUsers">Users in Room: </p>
+   <p>
+      <input type="text" id="message_input" />
+      <button onclick="sendMessage()">send</button>
+      <br>
+      <span id="deleteBtnSpan"></span>
+      <br>
+      <label>Create New Room: </label>
+      <input type="text" id="newRoom" placeholder="Room Name"></text>
+      <button onclick="createRoom()">Create Room</button>
+      <br>
+      <label>Join Room: </label>
+      <input type="text" id="joinRoom" placeholder="Room Name"></text>
+      <button onclick="joinRoom()">Join Room</button>
+
+   <div id="chatlog"></div>
+</body>
+
+</html>
