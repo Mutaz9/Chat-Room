@@ -1,166 +1,334 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
-<head>
-   <script src="/socket.io/socket.io.js"></script>
-   <script type="text/javascript">
+   <head>
+      <script src="/socket.io/socket.io.js"></script>
+      <title>Mutaz and Evan's Awesome ChatRoom</title>
+      <link rel="stylesheet"
+         href="http://ec2-18-221-250-58.us-east-2.compute.amazonaws.com/~evan/m6/Group/chatStyle.css" type="text/css">
+   </head>
+   <script>
 
-      let socketio = io.connect();
+      const socketio = io.connect();
       let roomName = "";
-      //socketio.on("username_to_client", function (isValid) {
-      //isValid;
-      //username == null || !regEx.test(username) || 
-      //if (!isValid) {
-      //username = prompt("Enter a username: ");
-      //socketio.emit("newUser", username);
-      //}
-      //});
-      //socketio.on("connect", function() {
       let username = prompt("Enter a username: ");
-      //let valid = false;
-      const regEx = /[a-zA-Z]/;
       //socketio.emit("newUser", username);
-
-
-      //socketio.emit("newUser", username);
+      //socketio.on("invalid_username", function (message) {
+         //alert(message);
+         //username = prompt("Enter a username: ");
+         socketio.emit("newUser", username);
+         //updateName();
       //});
 
       class room {
-          room (name, owner) {
-              this.name = name;
-              this.owner = owner;
-              this.users = [owner];
-              this.messages = [];
-              this.banned = []
-          }
+         constructor(name, owner, password) {
+            this.name = name;
+            this.owner = owner;
+            this.password = password;
+            this.users = [owner];
+            this.messages = [];
+            this.banned = []
+         }
       }
 
+      // updating the list of rooms
       socketio.on("rooms_to_client", function (allRooms) {
-         textOfRooms = document.getElementById("rooms");
-         while(textOfRooms.firstChild) {
+         const textOfRooms = document.getElementById("rooms");
+         while (textOfRooms.firstChild) {
             textOfRooms.removeChild(textOfRooms.firstChild);
-        }
-        roomNameElement = document.createElement("span");
-       roomNameElement.appendChild(document.createTextNode("Rooms:"));
-       textOfRooms.append(roomNameElement.textContent);
-        allRooms.forEach(function (element) {
-           roomNameElement = document.createElement("span");
-           roomNameElement.setAttribute("class", "roomNameElement");
-           roomNameElement.appendChild(document.createTextNode(element));
-           textOfRooms.append(roomNameElement.textContent + ", ");
-        });
-      });
-
-
-      socketio.on("message_to_client", function (data) {
-         console.log(data);
-         // how to use socket rooms properly (socketio.in(roomName))
-         //if (roomName == data["room"]) {
-         //Append an HR thematic break and the escaped HTML of the new message
-         document.getElementById("chatlog").appendChild(document.createElement("hr"));
-         document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
-         //}
-      });
-
-      socketio.on("newRoom_to_client", function (data) {
-         let roomName = data["roomName"];
-         let textOfRooms = document.getElementById("rooms");
+         }
          let roomNameElement = document.createElement("span");
+         roomNameElement.appendChild(document.createTextNode("Rooms: "));
+         textOfRooms.append(roomNameElement.textContent);
+         for (let key in allRooms) {
+            roomNameElement = document.createElement("span");
+            roomNameElement.setAttribute("class", "roomNameElement");
+            roomNameElement.appendChild(document.createTextNode(allRooms[key].name));
+            textOfRooms.append(roomNameElement.textContent + ", ");
+         }
+      });
+
+      // adding a single message to the chat
+      // still need to do the get all messages
+      socketio.on("message_to_client", function (data) {
+         if (data["sent"] == true) {
+            console.log(data);
+            //Append an HR thematic break and the escaped HTML of the new message
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(data['username'] + ": " + data['message']));
+         } else {
+            alert(data["message"]);
+         }
+      });
+
+      // updating a new current room
+      socketio.on("newRoom_to_client", function (room) {
+         //let roomName = data["roomName"];
+         const textOfRooms = document.getElementById("rooms");
+         const roomNameElement = document.createElement("span");
          roomNameElement.setAttribute("class", "roomNameElement");
-         roomNameElement.appendChild(document.createTextNode(roomName));
+         roomNameElement.appendChild(document.createTextNode(room.name));
          textOfRooms.append(roomNameElement.textContent + ", ");
       });
 
+      // updating a joined curret room
       socketio.on("room_to_client", function (data) {
-         let curRoomText = document.getElementById("curRoom");
-         curRoomText.textContent = "Current Room: " + data["roomName"];
-         if (document.getElementById("deleteRoomBtn") != null) {
-            updateDeleteBtn();
+         if (data["inRoom"] == true) {
+            const curRoomText = document.getElementById("curRoom");
+            curRoomText.textContent = "Current Room: " + data["room"].name;
+            if (document.getElementById("deleteRoomBtn") != null) {
+               updateDeleteBtn();
+            }
+         } else {
+            alert(data["message"]);
          }
-         let usersInRoomText = document.getElementById("curRoom");
-         //data["allRoomsAndUsers"].data["roomName"].forEach(function (element) {
-            //usersInRoomText.textContent = usersInRoomText.textContent + element;
-         //});
       });
 
-      socketio.on("createDelete", function (roomName) {
-         prevDeleteBtn = document.getElementById("deleteRoomBtn");
+      // updating users in current room
+      socketio.on("users_to_client", function (room) {
+         const usersInRoomText = document.getElementById("curRoomUsers");
+         while (usersInRoomText.firstChild) {
+            usersInRoomText.firstChild.remove();
+         }
+         const usersInRoomElement = document.createElement("span");
+         usersInRoomElement.setAttribute("id", "usersInRoomElement");
+         usersInRoomElement.appendChild(document.createTextNode("Users In Room: "));
+         for (user of room.users) {
+            usersInRoomElement.textContent = usersInRoomElement.textContent + user + ", ";
+         }
+         usersInRoomText.append(usersInRoomElement);
+      });
+
+      // displaying owner actions
+      socketio.on("owner_actions_to_client", function (roomName) {
+         const prevDeleteBtn = document.getElementById("deleteRoomBtn");
          if (prevDeleteBtn != null) {
             prevDeleteBtn.remove();
          }
-         let deleteBtn = document.createElement("button");
+         createDeleteBtn(roomName);
+         createKickButton();
+         createBanBtn();
+      });
+      function createDeleteBtn(roomName) {
+         const deleteBtn = document.createElement("button");
          deleteBtn.setAttribute("id", "deleteRoomBtn");
-         // deleteBtn.setAttribute("value", "Delete Room " + roomName);
          deleteBtn.textContent = ("Delete Room: " + roomName);
          deleteBtn.setAttribute("onclick", "deleteRoom()")
          document.getElementById("deleteBtnSpan").appendChild(deleteBtn);
-         
+      }
+      function createKickButton() {
+         const kickLabel = document.createElement("label");
+         kickLabel.textContent = "Kick User From Room: "
+         document.getElementById("kickBtnSpan").append(kickLabel);
+
+         const kickTextBox = document.createElement("input");
+         kickTextBox.setAttribute("type", "text");
+         kickTextBox.setAttribute("id", "kickTextBox");
+         kickTextBox.setAttribute("placeholder", "Enter username to kick:");
+         document.getElementById("kickBtnSpan").append(kickTextBox);
+
+         const kickBtn = document.createElement("button");
+         kickBtn.setAttribute("onclick", "kickUser()");
+         kickBtn.textContent = "Kick";
+         document.getElementById("kickBtnSpan").append(kickBtn);
+
+      }
+      function kickUser() {
+         const nameToKick = document.getElementById("kickTextBox").value;
+         socketio.emit("kickUser", { nameToKick: nameToKick, roomName: roomName });
+      }
+      socketio.on("alert_message", function (message) {
+         alert(message);
+      });
+      function createBanBtn() {
+         const banLabel = document.createElement("label");
+         banLabel.textContent = "Ban User From Room: "
+         document.getElementById("banBtnSpan").append(banLabel);
+
+         const banTextBox = document.createElement("input");
+         banTextBox.setAttribute("type", "text");
+         banTextBox.setAttribute("id", "banTextBox");
+         banTextBox.setAttribute("placeholder", "Enter username to ban:");
+         document.getElementById("banBtnSpan").append(banTextBox);
+
+         const banBtn = document.createElement("button");
+         banBtn.setAttribute("onclick", "banUser()");
+         banBtn.textContent = "Ban";
+         document.getElementById("banBtnSpan").append(banBtn);
+      }
+      function banUser() {
+         const nameToBan = document.getElementById("banTextBox").value;
+         socketio.emit("banUser", { nameToBan: nameToBan, roomName: roomName, username: username });
+      }
+
+      socketio.on("create_leave_to_client", function (room) {
+         removeLeaveButton();
+         const leaveButton = document.createElement("button");
+         leaveButton.setAttribute("id", "leaveButton");
+         // deleteBtn.setAttribute("value", "Delete Room " + roomName);
+         leaveButton.textContent = ("Leave Room");
+         leaveButton.setAttribute("onclick", "leaveRoom()")
+         document.getElementById("leaveButtonSpan").appendChild(leaveButton);
       });
 
-      socketio.on("deletionCompleted", function(data) {
+      socketio.on("deletionCompleted", function (data) {
          alert(data["message"]);
-         textOfRooms = document.getElementById("rooms");
-         prevDeleteBtn = document.getElementById("deleteRoomBtn");
+         removeDeleteButton();
+         removeCurRoomText();
+         removeUsersText();
+      });
+
+      socketio.on("leaveCompleted", function () {
+         // should we alert?
+         removeCurRoomText();
+         removeLeaveButton();
+         removeDeleteButton();
+         removeUsersText();
+         clearChat();
+         removeKickSpan();
+         removeBanSpan();
+      });
+
+      function removeUsersText() {
+         const exists = document.getElementById("usersInRoomElement");
+         if (exists) {
+            exists.remove();
+         }
+      }
+      function clearChat() {
+         const chatData = document.getElementById("chatlog");
+         console.log(chatData);
+         console.log(chatData.length);
+         const startingLength = chatData.childNodes.length;
+         for (let i = 0; i < startingLength; i++) {
+            chatData.firstChild.remove();
+         }
+
+      }
+      function removeCurRoomText() {
+         const curRoomText = document.getElementById("curRoom");
+         curRoomText.textContent = "Current Room: ";
+      }
+      function removeDeleteButton() {
+         const prevDeleteBtn = document.getElementById("deleteRoomBtn");
          if (prevDeleteBtn != null) {
             prevDeleteBtn.remove();
          }
-         let curRoomText = document.getElementById("curRoom");
-         curRoomText.textContent = "Current Room: "
-      });
+      }
+      function removeLeaveButton() {
+         const leaveButton = document.getElementById("leaveButton");
+         if (leaveButton != null) {
+            leaveButton.remove();
+         }
+      }
+      function removeKickSpan() {
+         const kickSpan = document.getElementById("kickBtnSpan");
+         while (kickSpan.firstChild) {
+            kickSpan.firstChild.remove();
+         }
 
-      //delete, kick, ban, listing users in room, can't create username if made, private messages
+      }
+      function removeBanSpan() {
+         const banSpan = document.getElementById("banBtnSpan");
+         while (banSpan.firstChild) {
+            banSpan.firstChild.remove();
+         }
 
-
-      function sendMessage() {
-         let msg = document.getElementById("message_input").value;
-         socketio.emit("message_to_server", { message: msg, username: username, room: roomName });
       }
 
-      //start of change
+      function sendMessage() {
+         const msg = document.getElementById("message_input").value;
+         socketio.emit("message_to_server", { message: msg, username: username, room: roomName });
+      }
       function createRoom() {
+         const oldRoom = roomName;
          roomName = document.getElementById("newRoom").value;
-         let room = new room(roomName, username)
-         socketio.emit("newRoom_to_server", room);
+         const password = document.getElementById("newRoomPassword").value;
+         const createdRoom = new room(roomName, username, password);
+         socketio.emit("newRoom_to_server", { room: createdRoom, oldRoom: oldRoom, username: username });
+      }
+      function PM() {
+         userPMTo = document.getElementById("newPM").value;
+         userPMFrom = username;
+         message = document.getElementById("PMText").value;
+         socketio.emit("private_message", { userPMTo: userPMTo, message: message, userPMFrom: userPMFrom, roomName: roomName });
       }
 
       function joinRoom() {
-         let oldRoom = roomName;
+         const oldRoom = roomName;
          roomName = document.getElementById("joinRoom").value;
-         socketio.emit("roomName_to_server", { roomName: roomName, username: username, oldRoom: oldRoom });
+         const password = document.getElementById("joinRoomPassword").value;
+         socketio.emit("roomName_to_server", { roomName: roomName, username: username, oldRoom: oldRoom, password: password });
       }
-
       function deleteRoom() {
          socketio.emit("delete_room", roomName);
       }
-
+      function leaveRoom() {
+         socketio.emit("leave_room", { roomName: roomName, username: username });
+      }
       function updateDeleteBtn() {
-         btn = document.getElementById("deleteRoomBtn");
+         const btn = document.getElementById("deleteRoomBtn");
          btn.textContent = ("Delete Room: " + roomName);
       }
+      function updateName() {
+         const usernameDisplay = document.getElementById("username");
+         if (usernameDisplay.firstChild != null) {
+            usernameDisplay.replaceChild(document.createTextNode("Username: " + username), usernameDisplay.firstChild);
+         } else {
+            usernameDisplay.appendChild(document.createTextNode("Username: " + username));
+         }
+      }
 
+      socketio.on("dconnecting", function () {
+         socketio.emit("sendingRoomName", roomName);
+      });
 
    </script>
-</head>
+   </head>
 
-<body>
-   <p id="rooms">Rooms: </p>
-   <p id="curRoom">Current Room: </p>
-   <p id="curRoomUsers">Users in Room: </p>
-   <p>
-      <input type="text" id="message_input" />
-      <button onclick="sendMessage()">send</button>
+   <body>
+      <p id="username"></p>
+      <script>
+         updateName(); 
+      </script>
+      <p id="rooms">Rooms: </p>
+      <p id="curRoom">Current Room: </p>
+      <p id="curRoomUsers"> </p>
+      <p>
+         <input type="text" id="message_input">
+         <button onclick="sendMessage()">Send</button>
+         <br>
+         <span id="kickBtnSpan"></span>
+         <br>
+         <span id="banBtnSpan"></span>
+         <br>
+         <span id="deleteBtnSpan"></span>
+         <br>
+         <span id="leaveButtonSpan"></span>
+         <br>
+      <div id="createNewRoomHolder">
+         <label>Create New Room: </label>
+         <input type="text" id="newRoom" placeholder="Room Name">
+         <input type="text" id="newRoomPassword" placeholder="Password (if applicable)">
+         <button onclick="createRoom()">Create Room</button>
+      </div>
       <br>
-      <span id="deleteBtnSpan"></span>
+      <div id="joinRoomHolder">
+         <label>Join Room: </label>
+         <input type="text" id="joinRoom" placeholder="Room Name">
+         <input type="text" id="joinRoomPassword" placeholder="Password (if applicable)">
+         <button onclick="joinRoom()">Join Room</button>
+      </div>
       <br>
-      <label>Create New Room: </label>
-      <input type="text" id="newRoom" placeholder="Room Name"></text>
-      <button onclick="createRoom()">Create Room</button>
+      <div id="PMHolder">
+         <label>Private Message User: </label>
+         <input type="text" id="newPM" placeholder="User">
+         <input type="text" id="PMText" placeholder="Message">
+         <button onclick="PM()">PM</button>
+      </div>
       <br>
-      <label>Join Room: </label>
-      <input type="text" id="joinRoom" placeholder="Room Name"></text>
-      <button onclick="joinRoom()">Join Room</button>
 
-   <div id="chatlog"></div>
-</body>
+      <div id="chatlog"></div>
+   </body>
 
 </html>
