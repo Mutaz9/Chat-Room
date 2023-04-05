@@ -14,10 +14,10 @@
       let username = prompt("Enter a username: ");
       //socketio.emit("newUser", username);
       //socketio.on("invalid_username", function (message) {
-         //alert(message);
-         //username = prompt("Enter a username: ");
-         socketio.emit("newUser", username);
-         //updateName();
+      //alert(message);
+      //username = prompt("Enter a username: ");
+      socketio.emit("newUser", username);
+      //updateName();
       //});
 
       class room {
@@ -49,7 +49,6 @@
       });
 
       // adding a single message to the chat
-      // still need to do the get all messages
       socketio.on("message_to_client", function (data) {
          if (data["sent"] == true) {
             console.log(data);
@@ -59,6 +58,13 @@
          } else {
             alert(data["message"]);
          }
+      });
+
+      socketio.on("messages_to_client", function (data) {
+        for (let message in data["room"].messages) {
+            document.getElementById("chatlog").appendChild(document.createElement("hr"));
+            document.getElementById("chatlog").appendChild(document.createTextNode(message));
+        }
       });
 
       // updating a new current room
@@ -295,38 +301,35 @@
       <p id="curRoom">Current Room: </p>
       <p id="curRoomUsers"> </p>
       <p>
+         <div id="sendMessage">
+         <label>Send Message: </label>
          <input type="text" id="message_input">
          <button onclick="sendMessage()">Send</button>
-         <br>
+         </div>
          <span id="kickBtnSpan"></span>
-         <br>
          <span id="banBtnSpan"></span>
-         <br>
          <span id="deleteBtnSpan"></span>
-         <br>
          <span id="leaveButtonSpan"></span>
-         <br>
-      <div id="createNewRoomHolder">
-         <label>Create New Room: </label>
-         <input type="text" id="newRoom" placeholder="Room Name">
-         <input type="text" id="newRoomPassword" placeholder="Password (if applicable)">
-         <button onclick="createRoom()">Create Room</button>
+      <div id="bottomRight">
+         <div id="createNewRoomHolder">
+            <label>Create New Room: </label>
+            <input type="text" id="newRoom" placeholder="Room Name">
+            <input type="text" id="newRoomPassword" placeholder="Password (if applicable)">
+            <button onclick="createRoom()">Create Room</button>
+         </div>
+         <div id="joinRoomHolder">
+            <label>Join Room: </label>
+            <input type="text" id="joinRoom" placeholder="Room Name">
+            <input type="text" id="joinRoomPassword" placeholder="Password (if applicable)">
+            <button onclick="joinRoom()">Join Room</button>
+         </div>
+         <div id="PMHolder">
+            <label>Private Message User: </label>
+            <input type="text" id="newPM" placeholder="User">
+            <input type="text" id="PMText" placeholder="Message">
+            <button onclick="PM()">PM</button>
+         </div>
       </div>
-      <br>
-      <div id="joinRoomHolder">
-         <label>Join Room: </label>
-         <input type="text" id="joinRoom" placeholder="Room Name">
-         <input type="text" id="joinRoomPassword" placeholder="Password (if applicable)">
-         <button onclick="joinRoom()">Join Room</button>
-      </div>
-      <br>
-      <div id="PMHolder">
-         <label>Private Message User: </label>
-         <input type="text" id="newPM" placeholder="User">
-         <input type="text" id="PMText" placeholder="Message">
-         <button onclick="PM()">PM</button>
-      </div>
-      <br>
 
       <div id="chatlog"></div>
    </body>

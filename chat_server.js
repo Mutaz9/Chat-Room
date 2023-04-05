@@ -117,7 +117,6 @@ io.on("connection", function (socket) {
                 return;
             }
             if (allRooms.hasOwnProperty(data["oldRoom"]) && data["oldRoom"] != data["roomName"] && allRooms[data["oldRoom"]].users.includes(data["username"])) {
-                console.log("yowie");
                 leaveRoom({ roomName: data["oldRoom"], username: data["username"] });
             }
             let room = allRooms[data["roomName"]];
@@ -127,6 +126,9 @@ io.on("connection", function (socket) {
             console.log(`User ${data["username"]} joined room ${room.name}`);
             socket.emit("room_to_client", { inRoom: true, room: room });
             io.in(room.name).emit("users_to_client", room);
+            data["room"] = room;
+            //data["inRoom"] = true; 
+            socket.emit("messages_to_client", data);
             if (room.owner == data['username']) {
                 socket.emit("owner_actions_to_client", room.name);
             }
