@@ -136,7 +136,7 @@
       }
 
       #chatlog {
-         max-height: 600px;
+         max-height: 450px;
          overflow-y: auto;
          overflow-x: hidden;
 
@@ -351,6 +351,7 @@
       clearChat();
       removeKickSpan();
       removeBanSpan();
+      removeUnbanSpan();
    });
 
    function removeUsersText() {
@@ -397,8 +398,14 @@
       while (banSpan.firstChild) {
          banSpan.firstChild.remove();
       }
-
    }
+
+   function removeUnbanSpan() {
+    const unbanSpan = document.getElementById("unbanBtnSpan");
+    while (unbanSpan.firstChild) {
+        unbanSpan.firstChild.remove();
+    }
+ }
 
    function sendMessage() {
       const msg = document.getElementById("message_input").value;
