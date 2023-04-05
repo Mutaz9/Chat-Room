@@ -226,6 +226,33 @@ socket.on("banUser", function (data) { //passed nameToBan, roomName
     }
 });
 
+socket.on("unbanUser", function (data) { //passed nameToUnban, roomName, username
+    let banned = true;
+    if (allRooms[data['roomName']].banned.includes(data['nameToBan'])) {
+        socket.emit("alert_message", "You've already banned this user.");
+        banned = true;
+    }
+    for (let user of allRooms[data["roomName"]].users) {
+        if (user == data["nameToBan"] && user == data["username"]) {
+            banningOwner = true;
+        }
+        if (user == data["nameToBan"] && user != data["username"]) {
+            banned = true;
+            allRooms[data["roomName"]].banned.push(data["nameToBan"]);
+            userSockets[data["nameToBan"]].emit("alert_message", "You have been banned from room " + data["roomName"]);
+            socket.emit("alert_message", "You have banned " + data["nameToBan"] + " from room " + data["roomName"]);
+            leaveRoom({ roomName: data["roomName"], username: data["nameToBan"] });
+            console.log(`User ${data["nameToBan"]} has been banned from room ${data["roomName"]}`);
+            console.log(data["roomName"] + " users list is " + allRooms[data["roomName"]].users);
+        }
+    }
+    if (!banned && !banningOwner) {
+        socket.emit("alert_message", "They are not in the room");
+    } else if (banningOwner) {
+        socket.emit("alert_message", "You cannot ban yourself");
+    }
+});
+
 socket.on("private_message", function (data) {
     const room = allRooms[data["roomName"]];
     if (room != null && room.users.includes(data["userPMTo"]) && data["userPMTo"] != data["userPMFrom"]) {

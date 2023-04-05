@@ -162,9 +162,29 @@
          banBtn.textContent = "Ban";
          document.getElementById("banBtnSpan").append(banBtn);
       }
+      function createUnbanBtn() {
+         const unbanLabel = document.createElement("label");
+         unbanLabel.textContent = "Unban User From Room: "
+         document.getElementById("unbanBtnSpan").append(unbanLabel);
+
+         const banTextBox = document.createElement("input");
+         banTextBox.setAttribute("type", "text");
+         banTextBox.setAttribute("id", "unbanTextBox");
+         banTextBox.setAttribute("placeholder", "Enter username to unban:");
+         document.getElementById("unbanBtnSpan").append(unbanTextBox);
+
+         const banBtn = document.createElement("button");
+         banBtn.setAttribute("onclick", "unbanUser()");
+         banBtn.textContent = "Unban";
+         document.getElementById("unbanBtnSpan").append(unbanBtn);
+      }
       function banUser() {
          const nameToBan = document.getElementById("banTextBox").value;
          socketio.emit("banUser", { nameToBan: nameToBan, roomName: roomName, username: username });
+      }
+      function unbanUser() {
+         const nameToBan = document.getElementById("unbanTextBox").value;
+         socketio.emit("unbanUser", { nameToUnban: nameToUnban, roomName: roomName, username: username });
       }
 
       socketio.on("create_leave_to_client", function (room) {
@@ -308,6 +328,7 @@
          </div>
          <span id="kickBtnSpan"></span>
          <span id="banBtnSpan"></span>
+         <span id="unbanBtnSpan"></span>
          <span id="deleteBtnSpan"></span>
          <span id="leaveButtonSpan"></span>
       <div id="bottomRight">
