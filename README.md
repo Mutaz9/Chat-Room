@@ -1,15 +1,25 @@
+# Live Link: http://ec2-3-21-37-47.us-east-2.compute.amazonaws.com:3456/
 
-# CSE330
-Mutaz Badr, 501713, mutaz3
+# Live Chatroom Web Application
 
-Evan Washington, 499336, evanwa1
+## Overview
+This project is an interactive, live chatroom web application designed to provide a seamless communication platform for users.
 
-Assumptions: User will not click cancel, enter in a previously made username, or a blank username. CSS file was not working (with TA assistance), put a link to the file and put the file in the html.
+## Technologies
+The application is primarily developed using JavaScript, Node.js, HTML, CSS, coupled with Socket.IO for real-time event-based communication.
 
-Creative Portion: 
+## Features
+Our live chatroom application boasts a multitude of features that enhance user experience, ensuring smooth interaction and user control. Here are some of the notable features:
 
-1. We created leave room buttons that take the user out of the room
-2. We created delete room buttons that remove the room
-3. We added chat logs so when someone joins late they can see the previous messages
-4. We added an unban feature
-5. Listed current room and current username
+1. **Room Creation**: Users can establish new chat rooms for specific discussions.
+2. **Room Joining**: The application allows users to join existing chat rooms.
+3. **Password Protection**: To ensure privacy and security, users can set passwords for their chat rooms.
+4. **Private Messaging**: Direct communication with specific users is possible through private messaging.
+5. **User Moderation**: Room owners have the privilege to kick or ban disruptive users from their rooms, ensuring a positive chat environment. They can also lift bans when deemed appropriate.
+6. **Room Deletion**: Users can delete their rooms when they are no longer needed.
+7. **Room Departure**: Users have the option to leave a chat room at any time.
+
+Upon visiting the website, users are required to create a username to proceed with utilizing these features.
+
+## Display
+The application interface displays a comprehensive view of all available rooms, the occupants of the current room, as well as all the messages exchanged within the room. This allows users to be aware of the current context and be updated with the ongoing discussions.
